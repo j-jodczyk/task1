@@ -1,4 +1,6 @@
-from flask import render_template, Blueprint, request, redirect, url_for, jsonify
+from flask import render_template, Blueprint, request, redirect, url_for, jsonify, escape
+from pydantic import BaseModel, Field, ValidationError, constr, conint
+
 from project import db
 from project.customers.models import Customer
 
@@ -24,25 +26,33 @@ def list_customers_json():
     customer_list = [{'name': customer.name, 'city': customer.city, 'age': customer.age} for customer in customers]
     return jsonify(customers=customer_list)
 
+class CustomerModel(BaseModel):
+    name: constr(strip_whitespace=True, min_length=1, max_length=50)
+    city: constr(strip_whitespace=True, min_length=1, max_length=50)
+    age: int
 
 # Route to create a new customer
 @customers.route('/create', methods=['POST', 'GET'])
 def create_customer():
     data = request.form
 
-    # Validate the form data
-    if 'name' not in data or 'city' not in data or 'age' not in data:
-        print('Invalid form data')
-        return jsonify({'error': 'Invalid form data'}), 400
-
-    new_customer = Customer(name=data['name'], city=data['city'], age=data['age'])
-
     try:
+        data = CustomerModel(**request.form)
+
+        name = escape(data.name)
+        city = escape(data.city)
+        age = data.age
+
+        new_customer = Customer(name=name, city=city, age=age)
+
         # Add the new customer to the session and commit to save to the database
         db.session.add(new_customer)
         db.session.commit()
         print('Customer added succesfully')
         return redirect(url_for('customers.list_customers'))
+    except ValidationError as e:
+        print('Invalid form data')
+        return jsonify({'error': 'Invalid form data', 'details': e.errors()}), 400
     except Exception as e:
         # Handle any exceptions, such as database errors
         db.session.rollback()

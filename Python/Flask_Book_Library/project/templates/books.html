@@ -30,8 +30,8 @@
             <!-- Loop through books and display each book -->
             {% for book in books %}
             <tr>
-                <td>{{ book.name }}</td>
-                <td>{{ book.author }}</td>
+                <td>{{ book.name | safe }}</td>
+                <td>{{ book.author | safe }}</td>
                 <td>{{ book.year_published }}</td> <!-- Display Year Published -->
                 <td>{{ book.book_type }}</td> <!-- Display Book Type -->
                 <td>
@@ -85,7 +85,7 @@
                             <option value="10days">10 Days</option>
                         </select>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-primary">Add Book</button>
                 </form>
             </div>

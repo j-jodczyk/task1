@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, ValidationError, constr, conint
 from project import db
 from project.customers.models import Customer
 
+NAME_REGEX = "^([a-zA-Z\u0080-\u024F]+(?:. |-| |'))*[a-zA-Z\u0080-\u024F]*$" # regex from https://stackoverflow.com/questions/11757013/regular-expressions-for-city-name
 
 # Blueprint for customers
 customers = Blueprint('customers', __name__, template_folder='templates', url_prefix='/customers')
@@ -27,9 +28,9 @@ def list_customers_json():
     return jsonify(customers=customer_list)
 
 class CustomerModel(BaseModel):
-    name: constr(strip_whitespace=True, min_length=1, max_length=50)
-    city: constr(strip_whitespace=True, min_length=1, max_length=50)
-    age: int
+    name: constr(pattern=NAME_REGEX, strip_whitespace=True, min_length=3, max_length=50)
+    city: constr(pattern=NAME_REGEX, strip_whitespace=True, min_length=3, max_length=50)
+    age: conint(gt=0)
 
 # Route to create a new customer
 @customers.route('/create', methods=['POST', 'GET'])
@@ -52,7 +53,7 @@ def create_customer():
         return redirect(url_for('customers.list_customers'))
     except ValidationError as e:
         print('Invalid form data')
-        return jsonify({'error': 'Invalid form data', 'details': e.errors()}), 400
+        return jsonify({'error': 'Invalid form data', 'details': e.errors()}), 400 # todo: better user informing
     except Exception as e:
         # Handle any exceptions, such as database errors
         db.session.rollback()
@@ -92,17 +93,20 @@ def edit_customer(customer_id):
 
     try:
         # Get data from the request
-        data = request.form
+        data = CustomerModel(**request.form)
 
         # Update customer details
-        customer.name = data['name']
-        customer.city = data['city']
-        customer.age = data['age']
+        customer.name = escape(data['name'])
+        customer.city = escape(data['city'])
+        customer.age = escape(data['age'])
 
         # Commit the changes to the database
         db.session.commit()
         print('Customer updated succesfully')
         return redirect(url_for('customers.list_customers'))
+    except ValidationError as e:
+        print('Invalid form data')
+        return jsonify({'error': 'Invalid form data', 'details': e.errors()}), 400 # todo: better user informing
     except Exception as e:
         # Handle any exceptions
         db.session.rollback()

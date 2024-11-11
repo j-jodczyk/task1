@@ -3,7 +3,8 @@ from pydantic import ValidationError
 
 from project import db
 from project.customers.models import Customer
-from project.common.form_models import CustomerModel
+from project.common.form_models import validate_customer_model
+from project.common.error_handlers import handle_validtion_error
 
 # Blueprint for customers
 customers = Blueprint('customers', __name__, template_folder='templates', url_prefix='/customers')
@@ -31,12 +32,15 @@ def create_customer():
     data = request.form
 
     try:
-        data = CustomerModel(**request.form)
-
-        customer = Customer(
+        valid_data = validate_customer_model(
             name = escape(data['name']),
             city = escape(data['city']),
             age = escape(data['age'])
+        )
+        customer = Customer(
+            name= valid_data["name"],
+            city=valid_data["city"],
+            age=valid_data["age"],
         )
 
         # Add the new customer to the session and commit to save to the database
@@ -45,8 +49,7 @@ def create_customer():
         print('Customer added succesfully')
         return redirect(url_for('customers.list_customers'))
     except ValidationError as e:
-        print('Invalid form data')
-        return jsonify({'error': 'Invalid form data', 'details': e.errors()}), 400
+        return handle_validtion_error(e)
     except Exception as e:
         # Handle any exceptions, such as database errors
         db.session.rollback()
@@ -86,20 +89,24 @@ def edit_customer(customer_id):
 
     try:
         # Get data from the request
-        data = CustomerModel(**request.form)
+        data = request.form
+        valid_data = validate_customer_model(
+            name=escape(data.get("name", customer.name)),
+            city=escape(data.get("city", customer.city)),
+            age=escape(data.get("age", customer.age))
+        )
 
         # Update customer details
-        customer.name = escape(data['name'])
-        customer.city = escape(data['city'])
-        customer.age = escape(data['age'])
+        customer.name = valid_data['name']
+        customer.city = valid_data['city']
+        customer.age = valid_data['age']
 
         # Commit the changes to the database
         db.session.commit()
         print('Customer updated succesfully')
         return redirect(url_for('customers.list_customers'))
     except ValidationError as e:
-        print('Invalid form data')
-        return jsonify({'error': 'Invalid form data', 'details': e.errors()}), 400
+        return handle_validtion_error(e)
     except Exception as e:
         # Handle any exceptions
         db.session.rollback()

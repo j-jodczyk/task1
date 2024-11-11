@@ -16,6 +16,13 @@ class CustomerModel(BaseModel):
     city: str = city_name
     age: int = age
 
+def validate_customer_model(name, city, age):
+    return CustomerModel(
+        name=name,
+        city=city,
+        age=age,
+    ).dict()
+
 
 class BookModel(BaseModel):
     name: str = book_name

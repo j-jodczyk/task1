@@ -1,9 +1,9 @@
 from pydantic import BaseModel, Field, constr, conint, condate, validate_arguments
 from typing import Literal
 
-CITY_NAME_REGEX = "^([a-zA-Z\u0080-\u024F]+(?:. |-| |'))*[a-zA-Z\u0080-\u024F]*$" # regex from https://stackoverflow.com/questions/11757013/regular-expressions-for-city-name
-BOOK_NAME_REGEX = "^[A-Za-z0-9\s\-_,\.;:()]+$" # regex from https://stackoverflow.com/questions/17721013/regular-expression-for-matching-titles-ex-book-title
-PERSON_NAME_REGEX = "^([a-zA-Z]{2,}\s[a-zA-Z]{1,}'?-?[a-zA-Z]{2,}\s?([a-zA-Z]{1,})?)" # regex from https://stackoverflow.com/questions/2385701/regular-expression-for-first-and-last-name
+CITY_NAME_REGEX = "^[A-Z\u0080-\u024F][a-zA-Z\u0080-\u024F]*(?:[.\-'\s][a-zA-Z\u0080-\u024F]+)*$" # regex from https://stackoverflow.com/questions/11757013/regular-expressions-for-city-name
+BOOK_NAME_REGEX = "^[A-Za-z0-9\s\-_,\.;:()!'\"]+$" # regex from https://stackoverflow.com/questions/17721013/regular-expression-for-matching-titles-ex-book-title
+PERSON_NAME_REGEX = "^[A-Z\u0100-\u017F][a-zA-Z\u0100-\u017F '.-]*[A-Za-z\u0100-\u017F][^-]$" # regex from https://stackoverflow.com/questions/2385701/regular-expression-for-first-and-last-name
 
 book_name = Field(pattern=BOOK_NAME_REGEX, strip_whitespace=True, min_length=1, max_length=64)
 person_name = Field(pattern=PERSON_NAME_REGEX, strip_whitespace=True, min_length=2, max_length=64)

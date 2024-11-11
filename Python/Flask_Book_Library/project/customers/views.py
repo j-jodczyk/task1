@@ -1,14 +1,12 @@
 from flask import render_template, Blueprint, request, redirect, url_for, jsonify, escape
-from pydantic import BaseModel, Field, ValidationError, constr, conint
+from pydantic import ValidationError
 
 from project import db
 from project.customers.models import Customer
-
-NAME_REGEX = "^([a-zA-Z\u0080-\u024F]+(?:. |-| |'))*[a-zA-Z\u0080-\u024F]*$" # regex from https://stackoverflow.com/questions/11757013/regular-expressions-for-city-name
+from project.common.form_models import CustomerModel
 
 # Blueprint for customers
 customers = Blueprint('customers', __name__, template_folder='templates', url_prefix='/customers')
-
 
 # Route to display customers in HTML
 @customers.route('/', methods=['GET'])
@@ -27,11 +25,6 @@ def list_customers_json():
     customer_list = [{'name': customer.name, 'city': customer.city, 'age': customer.age} for customer in customers]
     return jsonify(customers=customer_list)
 
-class CustomerModel(BaseModel):
-    name: constr(pattern=NAME_REGEX, strip_whitespace=True, min_length=3, max_length=50)
-    city: constr(pattern=NAME_REGEX, strip_whitespace=True, min_length=3, max_length=50)
-    age: conint(gt=0)
-
 # Route to create a new customer
 @customers.route('/create', methods=['POST', 'GET'])
 def create_customer():
@@ -40,20 +33,20 @@ def create_customer():
     try:
         data = CustomerModel(**request.form)
 
-        name = escape(data.name)
-        city = escape(data.city)
-        age = data.age
-
-        new_customer = Customer(name=name, city=city, age=age)
+        customer = Customer(
+            name = escape(data['name']),
+            city = escape(data['city']),
+            age = escape(data['age'])
+        )
 
         # Add the new customer to the session and commit to save to the database
-        db.session.add(new_customer)
+        db.session.add(customer)
         db.session.commit()
         print('Customer added succesfully')
         return redirect(url_for('customers.list_customers'))
     except ValidationError as e:
         print('Invalid form data')
-        return jsonify({'error': 'Invalid form data', 'details': e.errors()}), 400 # todo: better user informing
+        return jsonify({'error': 'Invalid form data', 'details': e.errors()}), 400
     except Exception as e:
         # Handle any exceptions, such as database errors
         db.session.rollback()
@@ -106,7 +99,7 @@ def edit_customer(customer_id):
         return redirect(url_for('customers.list_customers'))
     except ValidationError as e:
         print('Invalid form data')
-        return jsonify({'error': 'Invalid form data', 'details': e.errors()}), 400 # todo: better user informing
+        return jsonify({'error': 'Invalid form data', 'details': e.errors()}), 400
     except Exception as e:
         # Handle any exceptions
         db.session.rollback()

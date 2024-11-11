@@ -5,7 +5,7 @@ from wtforms.validators import DataRequired
 
 # Flask forms (wtforms) allow you to easily create forms in this format:
 class CreateCustomer(FlaskForm):
-    name = StringField('Name', validators=[DataRequired()])  # xss
-    city = StringField('City', validators=[DataRequired()])  # xss
+    name = StringField('Name', validators=[DataRequired()])
+    city = StringField('City', validators=[DataRequired()])
     age = IntegerField('Age', validators=[DataRequired()])
     submit = SubmitField('Create Customer')

@@ -6,7 +6,6 @@ BOOK_NAME_REGEX = "^[A-Za-z0-9\s\-_,\.;:()]+$" # regex from https://stackoverflo
 PERSON_NAME_REGEX = "^([a-zA-Z]{2,}\s[a-zA-Z]{1,}'?-?[a-zA-Z]{2,}\s?([a-zA-Z]{1,})?)" # regex from https://stackoverflow.com/questions/2385701/regular-expression-for-first-and-last-name
 
 book_name = Field(pattern=BOOK_NAME_REGEX, strip_whitespace=True, min_length=1, max_length=64)
-book_type = Field(strip_whitespace=True, min_length=3, max_length=20)
 person_name = Field(pattern=PERSON_NAME_REGEX, strip_whitespace=True, min_length=2, max_length=64)
 city_name = Field(pattern=CITY_NAME_REGEX, strip_whitespace=True, min_length=3, max_length=64)
 age = Field(gt=0)
@@ -44,5 +43,5 @@ class LoanModel(BaseModel):
     loan_date: condate()
     return_date: condate()
     original_author: str = person_name
-    original_year_published: conint(gt=0)
-    original_book_type: constr(pattern=CITY_NAME_REGEX, strip_whitespace=True, min_length=3, max_length=50)
+    original_year_published: int = age
+    original_book_type: Literal['2days', '5days', '10days']
